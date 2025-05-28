@@ -1,0 +1,11 @@
+await contract.leaseEnd()
+await contract.leaseStart()
+await contract.tenant()
+await contract.getAgreementDetails()
+console.log(contract.interface.fragments.map(f => f.name))
+contract = await RentalAgreement.attach("0x5FbDB2315678afecb367f032d93F642f64180aa3");
+await contract.tenant();
+await.contract.tenant();
+const contract = await RentalAgreement.attach("0x5FbDB2315678afecb367f032d93F642f64180aa3");
+const contract = await RentalAgreement
+const RentalAgreement = await ethers.getContractFactory("RentalAgreement");
