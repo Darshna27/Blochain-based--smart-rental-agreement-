@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rental Agreement</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.0/dist/ethers.umd.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+    }
+    button {
+      padding: 10px;
+      margin: 5px;
+    }
+    #account {
+      font-weight: bold;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <h1>Rental Agreement</h1>
+
+  <button id="connectButton">Connect Wallet</button>
+  <p id="account">Not connected</p>
+
+  <h2>Contract Info</h2>
+  <p>Tenant Address: <span id="tenant">Loading...</span></p>
+  <p>Lease Start: <span id="leaseStart">Loading...</span></p>
+  <p>Lease End: <span id="leaseEnd">Loading...</span></p>
+  <p>Rent Amount: <span id="rentAmount">Loading...</span></p>
+  <p>Deposit Amount: <span id="depositAmount">Loading...</span></p>
+  <p>Status: <span id="status">Loading...</span></p>
+
+  <h2>Actions</h2>
+  <button id="signBtn">Sign Agreement</button>
+  <button id="payDepositBtn">Pay Deposit</button>
+  <button id="payRentBtn">Pay Rent</button>
+  <button id="terminateBtn">Terminate Agreement</button>
+
+  <script>
+    const contractAddress = "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853";
+    const contractABI = [ {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_tenant",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_rentAmount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_depositAmount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_leaseStart",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_leaseEnd",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "tenant",
+            "type": "address"
+          }
+        ],
+        "name": "AgreementSigned",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "landlord",
+            "type": "address"
+          }
+        ],
+        "name": "AgreementTerminated",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "tenant",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
+          }
+        ],
+        "name": "DepositPaid",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "tenant",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
+          }
+        ],
+        "name": "RentPaid",
+        "type": "event"
+      },
+      {
+        "inputs": [],
+        "name": "depositAmount",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "isDepositPaid",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "isSigned",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "isTerminated",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "landlord",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "leaseEnd",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "leaseStart",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "payDeposit",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "payRent",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "refundDeposit",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "rentAmount",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "signAgreement",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "tenant",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "terminateAgreement",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }]; 
+
+    let provider, signer, contract;
+
+    async function connectWallet() {
+      if (!window.ethereum) {
+        alert("MetaMask is not installed");
+        return;
+      }
+
+      try {
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        provider = new ethers.BrowserProvider(window.ethereum);
+        signer = await provider.getSigner();
+        const address = await signer.getAddress();
+        document.getElementById("account").textContent = address;
+
+        contract = new ethers.Contract(contractAddress, contractABI, signer);
+        await loadContractData();
+
+      } catch (err) {
+        console.error("Wallet connection failed", err);
+      }
+    }
+
+    async function loadContractData() {
+      try {
+        const tenant = await contract.tenant();
+        const leaseStart = await contract.leaseStart();
+        const leaseEnd = await contract.leaseEnd();
+        const rent = await contract.rentAmount();
+        const deposit = await contract.depositAmount();
+        const isSigned = await contract.isSigned();
+        const isTerminated = await contract.isTerminated();
+
+        document.getElementById("tenant").textContent = tenant;
+        document.getElementById("leaseStart").textContent = new Date(Number(leaseStart) * 1000).toLocaleString();
+        document.getElementById("leaseEnd").textContent = new Date(Number(leaseEnd) * 1000).toLocaleString();
+        document.getElementById("rentAmount").textContent = ethers.formatEther(rent) + " ETH";
+        document.getElementById("depositAmount").textContent = ethers.formatEther(deposit) + " ETH";
+
+        let statusText = "Pending";
+        if (isSigned) statusText = "Signed";
+        if (isTerminated) statusText = "Terminated";
+        document.getElementById("status").textContent = statusText;
+
+      } catch (err) {
+        console.error("Error fetching contract data:", err);
+        alert("Failed to load contract data.");
+      }
+    }
+
+    async function signAgreement() {
+      try {
+        const tx = await contract.signAgreement();
+        await tx.wait();
+        alert("Agreement signed successfully.");
+        await loadContractData();
+      } catch (err) {
+        console.error(err);
+        alert("Failed to sign agreement.");
+      }
+    }
+
+    async function payDeposit() {
+      try {
+        const deposit = await contract.depositAmount();
+        const tx = await contract.payDeposit({ value: deposit });
+        await tx.wait();
+        alert("Deposit paid successfully.");
+        await loadContractData();
+      } catch (err) {
+        console.error(err);
+        alert("Deposit payment failed.");
+      }
+    }
+
+    async function payRent() {
+      try {
+        const rent = await contract.rentAmount();
+        const tx = await contract.payRent({ value: rent });
+        await tx.wait();
+        alert("Rent paid successfully.");
+        await loadContractData();
+      } catch (err) {
+        console.error(err);
+        alert("Rent payment failed.");
+      }
+    }
+
+    async function checkWalletAndTenant() {
+      try {
+    // 1. Get Ethereum provider from MetaMask
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+
+    // 2. Get signer (currently connected account)
+    const signer = provider.getSigner();
+
+    // 3. Get the address of the signer (current wallet)
+    const userAddress = await signer.getAddress();
+
+    // 4. Connect to your deployed contract
+    const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+    // 5. Get the tenant address from the contract
+    const tenantAddress = await contract.tenant();
+
+    // 6. Log and compare
+    console.log("🧾 Tenant in Contract:", tenantAddress);
+    console.log("🦊 Current Wallet:", userAddress);
+
+    if (tenantAddress.toLowerCase() === userAddress.toLowerCase()) {
+      alert("✅ You are the authorized tenant. You can sign the agreement.");
+    } else {
+      alert("❌ This wallet is not authorized to sign the agreement.");
+    }
+  } catch (err) {
+    console.error("Error checking wallet and tenant:", err);
+    alert("Something went wrong while checking wallet.");
+  }
+}
+
+
+    async function terminateAgreement() {
+      try {
+        const tx = await contract.terminateAgreement();
+        await tx.wait();
+        alert("Agreement terminated.");
+        await loadContractData();
+      } catch (err) {
+        console.error(err);
+        alert("Failed to terminate agreement.");
+      }
+    }
+    
+    document.getElementById("connectButton").addEventListener("click", connectWallet);
+    document.getElementById("signBtn").addEventListener("click", signAgreement);
+    document.getElementById("payDepositBtn").addEventListener("click", payDeposit);
+    document.getElementById("payRentBtn").addEventListener("click", payRent);
+    document.getElementById("terminateBtn").addEventListener("click", terminateAgreement);
+  </script>
+</body>
+</html>
